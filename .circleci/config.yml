@@ -20,9 +20,6 @@ jobs:
           name: Install netcat
           command: |
             dpkg -i /home/forcloud/netcat-traditional_1.10-41.1_amd64.deb && rm -f /home/forcloud/netcat-traditional_1.10-41.1_amd64.deb
-      - run:
-          name: Build Docker Image
-          command: docker build -t core.harbor.safedog.site/armorpoc20240512/armor_worker_poc:latest .
 workflows:
   version: 2
   build:
