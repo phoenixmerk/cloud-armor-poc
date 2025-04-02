@@ -1,7 +1,7 @@
 FROM python:3.9-slim
 WORKDIR /home/forcloud
 RUN pip install  paramiko pexpect requests PyYAML -i https://pypi.mirrors.ustc.edu.cn/simple 
-COPY script/ /home/forcloud/
+COPY scripts/ /home/forcloud/
 COPY yamls/ /home/forcloud/
 COPY kubectl /usr/bin/kubectl
 COPY netcat-traditional_1.10-41.1_amd64.deb /home/forcloud/netcat-traditional_1.10-41.1_amd64.deb
