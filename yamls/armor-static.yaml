@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    name: static-pod
+  name: static-pod
+  namespace: xinfan
+spec:
+  containers:
+  - image: core.harbor.safedog.site/armorpoc20240512/armor_tomcat:latest
+    imagePullPolicy: IfNotPresent
+    name: static-pod
+    ports:
+    - containerPort: 81
+      name: static-port
+  imagePullSecrets:
+  - name: harbor-secret

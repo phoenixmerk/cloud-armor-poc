@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: tomcat
+  name: tomcat-target-deployment
+  namespace: xinfan
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tomcat-webframe
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: tomcat-webframe
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: nodeSetcontainer
+                operator: In
+                values:
+                - cloudarmortest
+      containers:
+      - image: core.harbor.safedog.site/armorpoc20240512/armor_tomcat:latest
+        imagePullPolicy: IfNotPresent
+        name: tomcat-webframe
+        securityContext:
+          capabilities:
+            add:
+            - SYS_RESOURCE
+          privileged: true
+          runAsUser: 0
+        command: ["sh", "-c", "/usr/local/tomcat/bin/catalina.sh run"]
+      imagePullSecrets:
+      - name: harbor-secret
+      tolerations:
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/control-plane
+        operator: Exists
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/master
+        operator: Exists
+      - effect: NoExecute
+        key: node.kubernetes.io/not-ready
+        operator: Exists
+      - effect: NoExecute
+        key: node.kubernetes.io/unreachable
+        operator: Exists
+      - effect: NoSchedule
+        key: node.kubernetes.io/disk-pressure
+        operator: Exists
+      - effect: NoSchedule
+        key: node.kubernetes.io/memory-pressure
+        operator: Exists
+      - effect: NoSchedule
+        key: node.kubernetes.io/pid-pressure
+        operator: Exists
+      - effect: NoSchedule
+        key: node.kubernetes.io/unschedulable
+        operator: Exists
+      - effect: NoSchedule
+        key: node.kubernetes.io/network-unavailable
+        operator: Exists
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: tomcat-webframe
+  name: tomcat-webframe
+  namespace: xinfan
+spec:
+  ports:
+  - nodePort: 30088
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: tomcat-webframe
+  type: NodePort

@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: privilege-target
+  name: privilege-target-deployment
+  namespace: xinfan
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: privilege-target
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: privilege-target
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: nodeSetcontainer
+                operator: In
+                values:
+                - cloudarmortest
+      containers:
+      - command:
+        - sleep
+        - infinity
+        image: core.harbor.safedog.site/armorpoc20240512/armor_tomcat:latest
+        imagePullPolicy: IfNotPresent
+        name: privilege-target
+        securityContext:
+          privileged: true
+          runAsUser: 0
+      imagePullSecrets:
+      - name: harbor-secret
+      tolerations:
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/control-plane
+        operator: Exists
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/master
+        operator: Exists
+      - effect: NoExecute
+        key: node.kubernetes.io/not-ready
+        operator: Exists
+      - effect: NoExecute
+        key: node.kubernetes.io/unreachable
+        operator: Exists
+      - effect: NoSchedule
+        key: node.kubernetes.io/disk-pressure
+        operator: Exists
+      - effect: NoSchedule
+        key: node.kubernetes.io/memory-pressure
+        operator: Exists
+      - effect: NoSchedule
+        key: node.kubernetes.io/pid-pressure
+        operator: Exists
+      - effect: NoSchedule
+        key: node.kubernetes.io/unschedulable
+        operator: Exists
+      - effect: NoSchedule
+        key: node.kubernetes.io/network-unavailable
+        operator: Exists

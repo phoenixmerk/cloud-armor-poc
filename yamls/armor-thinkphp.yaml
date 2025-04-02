@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: thinkphp-target-deployment
+  namespace: xinfan
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: thinkphp
+  template:
+    metadata:
+      labels:
+        app: thinkphp
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: nodeSetcontainer
+                operator: In
+                values:
+                - cloudarmortest
+      containers:
+      - image: core.harbor.safedog.site/armorpoc20240512/armor_thinkphp:latest
+        imagePullPolicy: IfNotPresent
+        name: thinkphp-rce
+        ports:
+        - containerPort: 80
+      imagePullSecrets:
+      - name: harbor-secret
+      tolerations:
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/control-plane
+        operator: Exists
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/master
+        operator: Exists
+      - effect: NoExecute
+        key: node.kubernetes.io/not-ready
+        operator: Exists
+      - effect: NoExecute
+        key: node.kubernetes.io/unreachable
+        operator: Exists
+      - effect: NoSchedule
+        key: node.kubernetes.io/disk-pressure
+        operator: Exists
+      - effect: NoSchedule
+        key: node.kubernetes.io/memory-pressure
+        operator: Exists
+      - effect: NoSchedule
+        key: node.kubernetes.io/pid-pressure
+        operator: Exists
+      - effect: NoSchedule
+        key: node.kubernetes.io/unschedulable
+        operator: Exists
+      - effect: NoSchedule
+        key: node.kubernetes.io/network-unavailable
+        operator: Exists
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: thinkphp-service
+  namespace: xinfan
+spec:
+  ports:
+  - nodePort: 30030
+    port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: thinkphp
+  type: NodePort
