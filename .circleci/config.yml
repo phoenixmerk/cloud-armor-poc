@@ -1,6 +1,6 @@
 version: 2.1
 executors:
-  python-executor:
+  docker-executor:
     docker:
       - image: cimg/base:2024.04
     working_directory: /home/forcloud
