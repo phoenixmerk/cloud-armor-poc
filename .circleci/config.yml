@@ -3,7 +3,7 @@ executors:
   docker-executor:
     docker:
       - image: cimg/base:2025.04
-    working_directory: /
+    working_directory: /home/circleci/project
 jobs:
   build-docker-image:
     executor: docker-executor
