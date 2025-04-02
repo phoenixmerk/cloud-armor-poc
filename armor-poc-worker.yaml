@@ -1,0 +1,79 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: xinfan
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: xinfan
+  name: armor-poc-worker
+  labels:
+    app: armor-poc-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: armor-poc-worker
+  template:
+    metadata:
+      labels:
+        app: armor-poc-worker
+    spec:
+      tolerations:
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/master
+        operator: Exists
+      - effect: NoExecute
+        key: node.kubernetes.io/not-ready
+        operator: Exists
+      - effect: NoExecute
+        key: node.kubernetes.io/unreachable
+        operator: Exists
+      - effect: NoSchedule
+        key: node.kubernetes.io/disk-pressure
+        operator: Exists
+      - effect: NoSchedule
+        key: node.kubernetes.io/memory-pressure
+        operator: Exists
+      - effect: NoSchedule
+        key: node.kubernetes.io/pid-pressure
+        operator: Exists
+      - effect: NoSchedule
+        key: node.kubernetes.io/unschedulable
+        operator: Exists
+      - effect: NoSchedule
+        key: node.kubernetes.io/network-unavailable
+        operator: Exists
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/control-plane
+        operator: Exists
+      containers:
+      - name: armor-poc-worker
+        image: core.harbor.safedog.site/armorpoc20240512/armor_poc_worker:latest
+        imagePullPolicy: IfNotPresent
+        command:
+        - sleep
+        - infinity
+        volumeMounts:
+        - name: kube-config
+          mountPath: /root/.kube
+        resources:
+          requests:
+            memory: "50Mi"
+            cpu: "100m"
+          limits:
+            memory: "100Mi"
+            cpu: "150m"
+      volumes:
+      - name: kube-config
+        hostPath:
+          path: /root/.kube
+          type: Directory
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-role.kubernetes.io/control-plane  
+                operator: Exists
