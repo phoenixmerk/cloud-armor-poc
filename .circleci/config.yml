@@ -9,10 +9,6 @@ jobs:
     executor: docker-executor
     steps:
       - checkout
-      - run:
-          name: Print checkout directory
-          command: |
-            ls -la
       - setup_remote_docker
       - run:
           name: Build Docker image
