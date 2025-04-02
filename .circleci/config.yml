@@ -12,7 +12,7 @@ jobs:
       - run:
           name: Print checkout directory
           command: |
-            echo "Checkout directory: $(pwd)"
+            ls -la
       - setup_remote_docker
       - run:
           name: Build Docker image
