@@ -3,7 +3,7 @@ executors:
   docker-executor:
     docker:
       - image: cimg/base:2025.04
-    working_directory: /home/forcloud
+    working_directory: /
 jobs:
   build-docker-image:
     executor: docker-executor
