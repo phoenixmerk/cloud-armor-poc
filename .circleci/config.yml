@@ -9,6 +9,10 @@ jobs:
     executor: docker-executor
     steps:
       - checkout
+      - run:
+          name: Print checkout directory
+          command: |
+            echo "Checkout directory: $(pwd)"
       - setup_remote_docker
       - run:
           name: Build Docker image
