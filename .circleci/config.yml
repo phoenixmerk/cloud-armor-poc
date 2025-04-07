@@ -37,9 +37,12 @@ jobs:
             mv armor-poc-worker.yaml xinfan-poc-master
             XZ_OPT=-9 tar -cJvf xinfan-poc-master.tar.xz xinfan-poc-master
       - run:
-          name: Release package
+          name: Git authentication
           command: |
             gh auth login --with-token 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
+      - run:
+          name: Create GitHub release
+          command: |
             VERSION=$(date +'%Y.%m.%d')
             gh release create "v$VERSION" xinfan-poc-master.tar.xz --title "Release v$VERSION" --notes "自动发布的 Release"
       - run:
