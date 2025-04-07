@@ -1,6 +1,6 @@
 FROM python:3.9-slim
 WORKDIR /home/forcloud
-RUN pip install  paramiko pexpect requests PyYAML -i https://pypi.mirrors.ustc.edu.cn/simple 
+RUN pip install  paramiko pexpect requests PyYAML 
 RUN mkdir -p /home/forcloud/POC-version-1.4
 COPY scripts/ /home/forcloud/POC-version-1.4
 COPY yamls/ /home/forcloud/POC-version-1.4
