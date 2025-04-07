@@ -16,36 +16,33 @@ jobs:
             docker login -u cn-north-1@WS69AVPZCUMA3YMNFWHD -p 0c05b6ee08f62336ccaff8c335ac6987136f970a3da2e248aa7ff2d3d1e8401e swr.cn-north-1.myhuaweicloud.com
             docker build -t swr.cn-north-1.myhuaweicloud.com/armor-poc-test/armor_poc_worker:latest .
       - run:
+          name: Update apt-get sources
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y wget
+            wget -qO- https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo apt-key add -
+            sudo apt-add-repository "deb https://cli.github.com/packages stable main"
+            sudo apt-get update
+            sudo apt-get install -y gh
+      - run:
+          name: Package image
+          command: |
+            docker save -o worker.tar swr.cn-north-1.myhuaweicloud.com/armor-poc-test/armor_poc_worker:latest
+            mkdir xinfan-poc-master
+            mv worker.tar xinfan-poc-master
+            mv master-image.sh xinfan-poc-master
+            mv armor-poc-worker.yaml xinfan-poc-master
+            XZ_OPT=-9 tar -cJvf xinfan-poc-master.tar.xz xinfan-poc-master
+      - run:
+          name: Release package
+          command: |
+            gh auth login --with-token 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
+            VERSION=$(date +'%Y.%m.%d')
+            gh release create "v$VERSION" --title "Release v$VERSION" --notes "自动发布的 Release" xinfan-poc-master.tar.xz
+      - run:
           name: Push Docker image
           command: |
             docker push swr.cn-north-1.myhuaweicloud.com/armor-poc-test/armor_poc_worker:latest
-  github-release:
-    executor: docker-executor
-    steps:
-      - checkout
-      - run:
-          name: Create GitHub Release
-          command: |
-                  sudo apt-get update
-                  sudo apt-get install -y wget
-                  wget -qO- https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo apt-key add -
-                  sudo apt-add-repository "deb https://cli.github.com/packages stable main"
-                  sudo apt-get update
-                  sudo apt-get install -y gh
-
-                  docker login -u cn-north-1@WS69AVPZCUMA3YMNFWHD -p 0c05b6ee08f62336ccaff8c335ac6987136f970a3da2e248aa7ff2d3d1e8401e swr.cn-north-1.myhuaweicloud.com
-                  docker pull swr.cn-north-1.myhuaweicloud.com/armor-poc-test/armor_poc_worker:latest
-                  docker save -o worker.tar swr.cn-north-1.myhuaweicloud.com/armor-poc-test/armor_poc_worker:latest
-
-                  mkdir xinfan-poc-master
-                  mv worker.tar xinfan-poc-master
-                  mv master-image.sh xinfan-poc-master
-                  mv armor-poc-worker.yaml xinfan-poc-master
-                  XZ_OPT=-9 tar -cJvf xinfan-poc-master.tar.xz xinfan-poc-master
-
-                  gh auth login --with-token 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
-                  VERSION=$(date +'%Y.%m.%d')
-                  gh release create "v$VERSION" --title "Release v$VERSION" --notes "自动发布的 Release" xinfan-poc-master.tar.xz
 workflows:
   version: 2
   build:
