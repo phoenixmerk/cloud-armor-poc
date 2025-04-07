@@ -4,6 +4,7 @@ executors:
     docker:
       - image: cimg/base:2025.04
     working_directory: /home/circleci/project
+
 jobs:
   build-docker-image:
     executor: docker-executor
@@ -11,14 +12,21 @@ jobs:
       - checkout
       - setup_remote_docker
       - run:
+          name: Install GitHub CLI
+          command: |
+            # Check if gh is already installed
+            if ! command -v gh &> /dev/null; then
+              # Download and install gh
+              curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo gpg --dearmor -o /usr/share/keyrings/githubcli-archive-keyring.gpg
+              echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+              sudo apt update
+              sudo apt install gh
+            fi
+      - run:
           name: Build Docker image
           command: |
             docker login -u cn-north-1@WS69AVPZCUMA3YMNFWHD -p 0c05b6ee08f62336ccaff8c335ac6987136f970a3da2e248aa7ff2d3d1e8401e swr.cn-north-1.myhuaweicloud.com
             docker build -t swr.cn-north-1.myhuaweicloud.com/armor-poc-test/armor_poc_worker:latest .
-      - run:
-          name: Update apt-get sources
-          command: |
-            sudo apt-get install -y gh
       - run:
           name: Package image
           command: |
@@ -38,6 +46,7 @@ jobs:
           name: Push Docker image
           command: |
             docker push swr.cn-north-1.myhuaweicloud.com/armor-poc-test/armor_poc_worker:latest
+
 workflows:
   version: 2
   build:
