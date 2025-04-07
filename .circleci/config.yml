@@ -1,6 +1,6 @@
 version: 2.1
 orbs:
-  github-cli: CircleCI-Public/github-cli-orb@latest
+  github-cli: circleci/github-cli@latest
 executors:
   docker-executor:
     docker:
