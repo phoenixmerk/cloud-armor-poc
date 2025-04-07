@@ -1,6 +1,4 @@
 version: 2.1
-orbs:
-  github-cli: circleci/github-cli@2.6
 executors:
   docker-executor:
     docker:
@@ -38,14 +36,16 @@ jobs:
             mv master-image.sh xinfan-poc-master
             mv armor-poc-worker.yaml xinfan-poc-master
             XZ_OPT=-9 tar -cJvf xinfan-poc-master.tar.xz xinfan-poc-master
-      - github-cli/install
-      - github-cli/auth:
-          github_token: $GITHUB_TOKEN
-      - github-cli/release:
-          tag: v$(date +'%Y.%m.%d')
-          name: Release v$(date +'%Y.%m.%d')
-          body: 自动发布的 Release
-          files: xinfan-poc-master.tar.xz
+      - run:
+          name: GitHub authentication
+          command: |
+            # Authenticate with GitHub using the token
+            echo "${GITHUB_TOKEN}" | gh auth login --with-token
+      - run:
+          name: Git release 
+          command: |
+            VERSION=$(date +'%Y.%m.%d')
+            gh release create "v$VERSION" --title "Release v$VERSION" --notes "自动发布的 Release" xinfan-poc-master.tar.xz
       - run:
           name: Push Docker image
           command: |
