@@ -39,13 +39,13 @@ jobs:
       - run:
           name: GitHub authentication
           command: |
-            # Authenticate with GitHub using the token
+            export GH_AUTH_SKIP_MFA=true
             echo "${GITHUB_TOKEN}" | gh auth login --with-token
       - run:
           name: Git release 
           command: |
-            VERSION=$(date +'%Y.%m.%d')
-            gh release create "v$VERSION" --title "Release v$VERSION" --notes "自动发布的 Release" xinfan-poc-master.tar.xz
+            VERSION=$(date +'%Y.%m.%d.%H.%M')
+            gh release create "v$VERSION" --title "Release v$VERSION" --notes "CNAPP信帆POC镜像包 Release" xinfan-poc-master.tar.xz
       - run:
           name: Push Docker image
           command: |
