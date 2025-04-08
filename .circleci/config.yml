@@ -23,13 +23,6 @@ jobs:
               sudo apt install gh
             fi
       - run:
-          name: Configure Docker Mirror
-          command: |
-            sudo mkdir -p /etc/docker
-            sudo cp daemon.json /etc/docker/daemon.json
-            sudo systemctl daemon-reload
-            sudo systemctl restart docker
-      - run:
           name: Build Docker image
           command: |
             docker login -u cn-north-1@WS69AVPZCUMA3YMNFWHD -p 0c05b6ee08f62336ccaff8c335ac6987136f970a3da2e248aa7ff2d3d1e8401e swr.cn-north-1.myhuaweicloud.com
