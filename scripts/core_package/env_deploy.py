@@ -12,32 +12,6 @@ def print_func_name(func):
     return wrapper
 
 
-# 管理xinfan命名空间创建和删除
-@print_func_name
-def manage_namespace(namespace, optype):
-    try:
-        if optype == 'create':
-            result = subprocess.run(['kubectl', 'create', 'namespace', namespace],
-                                    capture_output=True, text=True)
-            if result.returncode == 0:
-                print(f"\033[92m>>命名空间 {namespace} 已创建\033[0m")
-            elif 'already exists' in result.stderr:
-                print(f"\033[93m>>命名空间 {namespace} 已经存在，跳过创建\033[0m")
-            else:
-                print("\033[91m>>创建命名空间时发生错误:\033[0m", result.stderr)
-                raise subprocess.CalledProcessError(result.returncode, result.args,
-                                                     output=result.stderr)
-        elif optype == 'delete':
-            output = subprocess.check_output(['kubectl', 'delete', 'ns', namespace],
-                                             stderr=subprocess.STDOUT).decode()
-            if 'deleted' in output:
-                print(f"\033[92m>>命名空间 {namespace} 已删除\033[0m")
-        else:
-            print("\033[91m>>不支持的操作类型\033[0m")
-    except subprocess.CalledProcessError as e:
-        print("\033[91m>>Error occurred:\033[0m", e.output)
-        raise
-
 # 这个方法用来部署ssh pod
 @print_func_name
 def manage_ssh_yaml(file_path, optype):
@@ -57,7 +31,12 @@ def manage_ssh_yaml(file_path, optype):
         if 'service/ssh-target-nodeport unchanged' in output:
             print("\033[92m>>ssh-service未改变\033[0m")
     except subprocess.CalledProcessError as e:
-        print("\033[91m>>Error occurred:\033[0m", e.output.decode())
+        if "Unable to connect to the server: dial tcp" in e.stderr:
+            print("\033[91m>>错误原因: DNS 解析失败或 Kubernetes 服务不可用\033[0m")
+        elif "The connection to the server localhost:8080 was refused" in e.stderr:
+            print("\033[91m>>错误原因: kubectl 认证失败或 Kubernetes 服务未启动\033[0m")
+        else:
+            print("\033[91m>>错误原因:\033[0m", e.output.decode())
         raise
 
 
@@ -80,7 +59,12 @@ def manage_thinkphp_yaml(file_path, optype):
         if 'service/thinkphp-service unchanged' in output:
             print("\033[92m>>thinkphp-service未改变\033[0m")
     except subprocess.CalledProcessError as e:
-        print("\033[91m>>Error occurred:\033[0m", e.output.decode())
+        if "Unable to connect to the server: dial tcp" in e.stderr:
+            print("\033[91m>>错误原因: DNS 解析失败或 Kubernetes 服务不可用\033[0m")
+        elif "The connection to the server localhost:8080 was refused" in e.stderr:
+            print("\033[91m>>错误原因: kubectl 认证失败或 Kubernetes 服务未启动\033[0m")
+        else:
+            print("\033[91m>>错误原因:\033[0m", e.output.decode())
         raise
 
 # 这个方法用来管理dvwa部署
@@ -96,7 +80,12 @@ def manage_dvwa_yaml(file_path, optype):
         if 'deployment.apps/dvwa-target-deployment configured' in output:
             print("\033[92m>>dvwa-deployment重新配置\033[0m")
     except subprocess.CalledProcessError as e:
-        print("\033[91m>>Error occurred:\033[0m", e.output.decode())
+        if "Unable to connect to the server: dial tcp" in e.stderr:
+            print("\033[91m>>错误原因: DNS 解析失败或 Kubernetes 服务不可用\033[0m")
+        elif "The connection to the server localhost:8080 was refused" in e.stderr:
+            print("\033[91m>>错误原因: kubectl 认证失败或 Kubernetes 服务未启动\033[0m")
+        else:
+            print("\033[91m>>错误原因:\033[0m", e.output.decode())
         raise
 
 
@@ -119,5 +108,10 @@ def manage_tomcat_yaml(file_path, optype):
         if 'service/tomcat-webframe unchanged' in output:
             print("\033[92m>>tomcat-service未改变\033[0m")
     except subprocess.CalledProcessError as e:
-        print("\033[91m>>Error occurred:\033[0m", e.output.decode())
+        if "Unable to connect to the server: dial tcp" in e.stderr:
+            print("\033[91m>>错误原因: DNS 解析失败或 Kubernetes 服务不可用\033[0m")
+        elif "The connection to the server localhost:8080 was refused" in e.stderr:
+            print("\033[91m>>错误原因: kubectl 认证失败或 Kubernetes 服务未启动\033[0m")
+        else:
+            print("\033[91m>>错误原因:\033[0m", e.output.decode())
         raise

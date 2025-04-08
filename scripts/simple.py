@@ -51,15 +51,6 @@ title_with_copyright = title + ' ' * padding + copyright
 
 print(title_with_copyright)
 
-# 这个方法用来确定命名空间存在
-def ensure_namespace_exists(namespace):
-    try:
-        subprocess.check_output(['kubectl', 'get', 'namespaces', namespace])
-        print(f"命名空间{namespace}已存在")
-        return True
-    except subprocess.CalledProcessError:
-        return False
-
 
 # 环境一键部署/删除
 def script_exec_0():
@@ -74,8 +65,6 @@ def script_exec_0():
         print(">>输入错误，请输入'create'或'delete'")
         optype = input(">>请输入环境部署操作类型（\033[91m例：create/delete\033[0m）：\n")
     if optype == 'create':
-        if not ensure_namespace_exists('xinfan'):
-            manage_namespace('xinfan', optype)
         manage_ssh_yaml('../yamls/armor-ssh.yaml', optype)
         manage_thinkphp_yaml('../yamls/armor-thinkphp.yaml', optype)
         manage_dvwa_yaml('../yamls/armor-dvwa.yaml', optype)
@@ -103,8 +92,6 @@ def script_exec_bruteforce_env():
         print(">>输入错误，请输入'create'或'delete'")
         optype = input(">>请输入环境部署操作类型（\033[91m例：create/delete\033[0m）：\n")
     if optype == 'create':
-        if not ensure_namespace_exists('xinfan'):
-            manage_namespace('xinfan', optype)
         manage_ssh_yaml('../yamls/armor-ssh.yaml', optype)
         pass
     elif optype == 'delete':
@@ -141,8 +128,6 @@ def script_exec_weapon_make_env():
         print(">>输入错误，请输入'create'或'delete'")
         optype = input(">>请输入环境部署操作类型（\033[91m例：create/delete\033[0m）：\n")
     if optype == 'create':
-        if not ensure_namespace_exists('xinfan'):
-            manage_namespace('xinfan', optype)
         manage_ssh_yaml('../yamls/armor-ssh.yaml', optype)
         pass
     elif optype == 'delete':
@@ -178,8 +163,6 @@ def script_exec_virus_env():
         print(">>输入错误，请输入'create'或'delete'")
         optype = input(">>请输入环境部署操作类型（\033[91m例：create/delete\033[0m）：\n")
     if optype == 'create':
-        if not ensure_namespace_exists('xinfan'):
-            manage_namespace('xinfan', optype)
         manage_dvwa_yaml('../yamls/armor-dvwa.yaml', optype)
         pass
     elif optype == 'delete':
@@ -213,8 +196,6 @@ def script_exec_exploit_env():
         print(">>输入错误，请输入'create'或'delete'")
         optype = input(">>请输入环境部署操作类型（\033[91m例：create/delete\033[0m）：\n")
     if optype == 'create':
-        if not ensure_namespace_exists('xinfan'):
-            manage_namespace('xinfan', optype)
         manage_thinkphp_yaml('../yamls/armor-thinkphp.yaml', optype)
         pass
     elif optype == 'delete':
@@ -243,8 +224,6 @@ def script_exec_mem_install_env():
         print(">>输入错误，请输入'create'或'delete'")
         optype = input(">>请输入环境部署操作类型（\033[91m例：create/delete\033[0m）：\n")
     if optype == 'create':
-        if not ensure_namespace_exists('xinfan'):
-            manage_namespace('xinfan', optype)
         manage_ssh_yaml('../yamls/armor-ssh.yaml', optype)
         manage_dvwa_yaml('../yamls/armor-dvwa.yaml', optype)
         manage_tomcat_yaml('../yamls/armor-tomcat.yaml', optype)
@@ -308,8 +287,6 @@ def script_exec_escape_env():
         print(">>输入错误，请输入'create'或'delete'")
         optype = input(">>请输入环境部署操作类型（\033[91m例：create/delete\033[0m）：\n")
     if optype == 'create':
-        if not ensure_namespace_exists('xinfan'):
-            manage_namespace('xinfan', optype)
         manage_ssh_yaml('../yamls/armor-ssh.yaml', optype)
         pass
     elif optype == 'delete':
@@ -337,8 +314,6 @@ def script_exec_backdoor_env():
         print(">>输入错误，请输入'create'或'delete'")
         optype = input(">>请输入环境部署操作类型（\033[91m例：create/delete\033[0m）：\n")
     if optype == 'create':
-        if not ensure_namespace_exists('xinfan'):
-            manage_namespace('xinfan', optype)
         manage_ssh_yaml('../yamls/armor-dvwa.yaml', optype)
         pass
     elif optype == 'delete':
@@ -379,8 +354,6 @@ def script_exec_log_audit():
     else:
         print(f"\033[91m>>节点 {node_name} 已经有标签 nodeSetcontainer=cloudarmortest\033[0m")
     internal_ip = get_control_plane_internal_ip()
-    if not ensure_namespace_exists('xinfan'):
-        manage_namespace('xinfan', 'create')
     manage_privilege_yaml('../yamls/armor-privilege.yaml', 'create')
     access_pod_url(internal_ip)
     access_secrets_url(internal_ip)
