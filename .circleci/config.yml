@@ -30,7 +30,8 @@ jobs:
       - run:
           name: Package image
           command: |
-            docker save -o worker.tar swr.cn-north-1.myhuaweicloud.com/armor-poc-test/armor_poc_worker:latest
+            docker tag swr.cn-north-1.myhuaweicloud.com/armor-poc-test/armor_poc_worker:latest core.harbor.safedog.site/armorpoc20240512/armor_poc_worker:latest
+            docker save -o worker.tar core.harbor.safedog.site/armorpoc20240512/armor_poc_worker:latest
             mkdir xinfan-poc-master
             mv worker.tar xinfan-poc-master
             mv master-image.sh xinfan-poc-master
