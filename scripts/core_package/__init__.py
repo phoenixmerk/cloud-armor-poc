@@ -14,7 +14,6 @@ from .common import (
 )
 
 from .env_deploy import (
-    manage_namespace,
     manage_ssh_yaml,
     manage_thinkphp_yaml,
     manage_dvwa_yaml,

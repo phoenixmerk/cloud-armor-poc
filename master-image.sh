@@ -131,7 +131,7 @@ check_environment() {
             import_image "$tool" "worker.tar"
             ;;
         2)
-            delete_image "$tool" "86021ce9c7c7"
+            delete_image "$tool" "core.harbor.safedog.site/armorpoc20240512/armor_poc_worker:latest"
             ;;
     esac
     return 0
