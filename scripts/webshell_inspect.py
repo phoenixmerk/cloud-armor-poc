@@ -29,11 +29,11 @@ def copy_webshell_process():
     # 使用pexpect.spawn执行命令
     child = pexpect.spawn(exec_command)
     # 在交互式shell中执行命令
-    command_to_copy_webshell = "cp /opt/webshell/*.php /opt/"
+    command_to_copy_webshell = "cp /opt/webshell/*.php /usr/bin/"
     child.sendline(command_to_copy_webshell)
     print("\033[92m>>复制webshell到/opt路径成功，10s后自动清除\033[0m")
     time.sleep(10)
-    command_to_delete_webshell = "rm -rf /opt/*.php"
+    command_to_delete_webshell = "rm -rf /usr/bin/*.php"
     child.sendline(command_to_delete_webshell)
     print("\033[92m>>删除webshell成功\033[0m")
     command_to_kill_bash = "pkill -f /bin/bash"
