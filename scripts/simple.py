@@ -55,7 +55,7 @@ print(title_with_copyright)
 # 环境一键部署/删除
 def script_exec_0():
     print("\033[91m>>脚本创建命名空间xinfan，并在指定测试节点部署所有所需的pod\033[0m")
-    input_test_node_name()
+    input_node_name("测试")
     if not node_has_label(node_name, 'nodeSetcontainer=cloudarmortest'):
         label_node(node_name)
     else:
@@ -82,7 +82,7 @@ def script_exec_0():
 # 暴力破解环境部署/删除
 def script_exec_bruteforce_env():
     global node_name
-    input_test_node_name()
+    input_node_name("测试")
     if not node_has_label(node_name, 'nodeSetcontainer=cloudarmortest'):
         label_node(node_name)
     else:
@@ -118,7 +118,7 @@ def script_exec_honeypot():
 # 武器构建环境部署/删除
 def script_exec_weapon_make_env():
     global node_name
-    input_test_node_name()
+    input_node_name("测试")
     if not node_has_label(node_name, 'nodeSetcontainer=cloudarmortest'):
         label_node(node_name)
     else:
@@ -153,7 +153,7 @@ def script_exec_bash_reverse_shell():
 # 病毒防护环境部署/删除
 def script_exec_virus_env():
     global node_name
-    input_test_node_name()
+    input_node_name("测试")
     if not node_has_label(node_name, 'nodeSetcontainer=cloudarmortest'):
         label_node(node_name)
     else:
@@ -186,7 +186,7 @@ def script_exec_webshell_inspect():
 # 漏洞利用环境部署/删除
 def script_exec_exploit_env():
     global node_name
-    input_test_node_name()
+    input_node_name("测试")
     if not node_has_label(node_name, 'nodeSetcontainer=cloudarmortest'):
         label_node(node_name)
     else:
@@ -214,7 +214,7 @@ def script_exec_thinkphp5_rce():
 # 安装植入环境部署/删除
 def script_exec_mem_install_env():
     global node_name
-    input_test_node_name()
+    input_node_name("测试")
     if not node_has_label(node_name, 'nodeSetcontainer=cloudarmortest'):
         label_node(node_name)
     else:
@@ -267,17 +267,15 @@ def script_exec_process_model():
     print('*******************************')
     exec_abnormal_tail_process()
 
-
 # 文件模型
 def script_exec_file_model():
     print('*******************************')
     exec_abnormal_touch_process()
 
-
 # 容器逃逸环境部署/删除
 def script_exec_escape_env():
     global node_name
-    input_test_node_name()
+    input_node_name("测试")
     if not node_has_label(node_name, 'nodeSetcontainer=cloudarmortest'):
         label_node(node_name)
     else:
@@ -294,17 +292,15 @@ def script_exec_escape_env():
         remove_label(node_name)
         pass
 
-
 # 黑客工具逃逸
 def script_exec_cdk_exploit():
     print('*******************************')
     exec_cdk_process()
 
-
 # 后门检测环境部署/删除
 def script_exec_backdoor_env():
     global node_name
-    input_test_node_name()
+    input_node_name("测试")
     if not node_has_label(node_name, 'nodeSetcontainer=cloudarmortest'):
         label_node(node_name)
     else:
@@ -321,7 +317,6 @@ def script_exec_backdoor_env():
         remove_label(node_name)
         pass
 
-
 # perl反弹shell
 def script_exec_perl_reverse_shell():
     print('*******************************')
@@ -331,7 +326,6 @@ def script_exec_perl_reverse_shell():
     thread2.start()
     thread1.join()
     thread2.join()
-
 
 # bash反弹shell进程参数
 def script_exec_bash_reverse_shell_process():
@@ -343,25 +337,19 @@ def script_exec_bash_reverse_shell_process():
     thread1.join()
     thread2.join()
 
-
 # 日志审计环境一键部署/删除&一键入侵数据生成
 def script_exec_log_audit():
     global node_name
-    print("\033[91m>>脚本创建命名空间xinfan，后续测试最好在主节点中进行\033[0m")
-    input_test_node_name()
+    print("\033[91m>>脚本创建命名空间xinfan，后续测试最好在master节点中进行\033[0m")
+    input_node_name("测试")
     if not node_has_label(node_name, 'nodeSetcontainer=cloudarmortest'):
         label_node(node_name)
     else:
         print(f"\033[91m>>节点 {node_name} 已经有标签 nodeSetcontainer=cloudarmortest\033[0m")
     internal_ip = get_control_plane_internal_ip()
-    manage_privilege_yaml('../yamls/armor-privilege.yaml', 'create')
     access_pod_url(internal_ip)
     access_secrets_url(internal_ip)
-    manage_static_pod('create')
-    print(f"\033[91m>>一键生成日志审计入侵数据成功，5s后回收所有部署\033[0m")
-    manage_privilege_yaml('../yamls/armor-privilege.yaml', 'delete')
-    manage_static_pod('delete')
-
+    print(f"\033[91m>>一键生成日志审计入侵数据成功\033[0m")
 
 # 恶意外联入侵数据生成
 def script_exec_ioc_alarm():
@@ -388,25 +376,27 @@ def get_all_node_names():
     node_names_str = ','.join(node_names)
     return node_names_str
 
+# 通用的节点名称输入方法
+def input_node_name(prompt_key: str) -> str:
+    node_names = get_all_node_names()
+    if not node_names:
+        raise RuntimeError(">>无法获取节点列表，请检查Kubernetes集群连接状态")
 
-# 输入测试节点名
-def input_test_node_name():
-    global node_name
-    node_name = input(f">>请输入测试节点名（\033[91m例：{get_all_node_names()}\033[0m）：\n")
-    node_list = get_node_names()
-    while node_name not in node_list:
-        print(">>请输入正确的节点名")
-        node_name = input(f">>请输入测试节点名（\033[91m例：{get_all_node_names()}\033[0m）：\n")
+    print(f"\n请选择{prompt_key}节点：")
+    for idx, name in enumerate(node_names):
+        print(f"{idx + 1}: {name}")
 
-
-# 输入执行节点名
-def input_exec_node_name():
-    global exec_node_name
-    exec_node_name = input(f">>请输入执行节点名（\033[91m例：{get_all_node_names()}\033[0m）：\n")
-    node_list = get_node_names()
-    while exec_node_name not in node_list:
-        print(">>请输入正确的节点名")
-        exec_node_name = input(f">>请输入执行节点名（\033[91m例：{get_all_node_names()}\033[0m）：\n")
+    while True:
+        try:
+            choice = int(input(">>请输入节点编号："))
+            if 1 <= choice <= len(node_names):
+                selected_node = node_names[choice - 1]
+                print(f">>你选择了节点：{selected_node}")
+                return selected_node
+            else:
+                print(f">>输入错误，请输入1到{len(node_names)}之间的数字")
+        except ValueError:
+            print(">>输入错误，请输入数字编号")
 
 
 # 定义一个字典，键是数字，值是脚本名
@@ -546,93 +536,96 @@ while True:
 script_name = scripts.get(choice)
 node_name = ''
 exec_node_name = ''
-if script_name is None:
-    print('>>错误: 无效的选择')
-else:
-    try:
-        if script_name == '环境一键部署/删除':
-            modify_yaml_files_based_on_user_input()
-            script_exec_0()
-        elif script_name == '一键生成入侵数据':
-            input_test_node_name()
-            input_exec_node_name()
-            script_exec_ssh_bruteforce()
-            script_exec_honeypot()
-            script_exec_bash_reverse_shell()
-            script_exec_virus_inspect()
-            script_exec_webshell_inspect()
-            script_exec_thinkphp5_rce()
-            script_exec_behinder_memshell()
-            script_exec_abnormal_cmd()
-            script_exec_abnormal_file()
-            script_exec_network_model()
-            script_exec_process_model()
-            script_exec_file_model()
-            script_exec_cdk_exploit()
-            script_exec_perl_reverse_shell()
-            script_exec_bash_reverse_shell_process()
-            script_exec_ioc_alarm()
-        elif script_name == '暴力破解环境部署/删除':
-            modify_yaml_files_based_on_user_input()
-            script_exec_bruteforce_env()
-        elif script_name == 'SSH暴力破解':
-            input_test_node_name()
-            script_exec_ssh_bruteforce()
-        elif script_name == '蜜罐诱捕':
-            input_test_node_name()
-            script_exec_honeypot()
-        elif script_name == '武器构建环境部署/删除':
-            modify_yaml_files_based_on_user_input()
-            script_exec_weapon_make_env()
-        elif script_name == 'Bash反弹交互执行':
-            input_exec_node_name()
-            script_exec_bash_reverse_shell()
-        elif script_name == '病毒防护环境部署/删除':
-            modify_yaml_files_based_on_user_input()
-            input_test_node_name()
-            script_exec_virus_env()
-        elif script_name == '二进制病毒动态监测':
-            script_exec_virus_inspect()
-        elif script_name == 'webshell动态监测':
-            script_exec_webshell_inspect()
-        elif script_name == '漏洞利用环境部署/删除':
-            script_exec_exploit_env()
-        elif script_name == 'ThinkPHP5远程代码执行':
-            input_test_node_name()
-            script_exec_thinkphp5_rce()
-        elif script_name == '内存webshell检测':
-            script_exec_behinder_memshell()
-        elif script_name == '容器异常命令':
-            input_test_node_name()
-            script_exec_abnormal_cmd()
-        elif script_name == '文件异常操作':
-            script_exec_abnormal_file()
-        elif script_name == '网络模型':
-            script_exec_network_model()
-        elif script_name == '文件模型':
-            script_exec_file_model()
-        elif script_name == '进程模型':
-            script_exec_process_model()
-        elif script_name == '容器逃逸环境部署/删除':
-            modify_yaml_files_based_on_user_input()
-            script_exec_escape_env()
-        elif script_name == 'CDK黑客工具利用':
-            script_exec_cdk_exploit()
-        elif script_name == '后门检测环境部署/删除':
-            modify_yaml_files_based_on_user_input()
-            script_exec_backdoor_env()
-        elif script_name == 'Perl反弹Shell':
-            input_exec_node_name()
-            script_exec_perl_reverse_shell()
-        elif script_name == 'Bash反弹Shell进程参数':
-            input_exec_node_name()
-            script_exec_bash_reverse_shell_process()
-        elif script_name == '日志审计一键入侵数据生成':
-            modify_yaml_files_based_on_user_input()
-            script_exec_log_audit()
-        elif script_name == '威胁情报':
-            input_exec_node_name()
-            script_exec_ioc_alarm()
-        print(f'>>\033[92m脚本{script_name}执行成功\033[0m')
-    except subprocess.CalledProcessError as e:
-        print(f'>>执行脚本{script_name}时发生错误: {str(e)}')
+SCRIPT_MAP = {
+    '环境一键部署/删除': lambda: (
+        modify_yaml_files_based_on_user_input(),
+        script_exec_0()
+    ),
+    '一键生成入侵数据': lambda: (
+        input_node_name("测试"),
+        input_node_name("执行"),
+        script_exec_ssh_bruteforce(),
+        script_exec_honeypot(),
+        script_exec_bash_reverse_shell(),
+        script_exec_virus_inspect(),
+        script_exec_webshell_inspect(),
+        script_exec_thinkphp5_rce(),
+        script_exec_behinder_memshell(),
+        script_exec_abnormal_cmd(),
+        script_exec_abnormal_file(),
+        script_exec_network_model(),
+        script_exec_process_model(),
+        script_exec_file_model(),
+        script_exec_cdk_exploit(),
+        script_exec_perl_reverse_shell(),
+        script_exec_bash_reverse_shell_process(),
+        script_exec_ioc_alarm()
+    ),
+    '暴力破解环境部署/删除': lambda: (
+        modify_yaml_files_based_on_user_input(),
+        script_exec_bruteforce_env()
+    ),
+    'SSH暴力破解': lambda: (
+        input_node_name("测试"),
+        script_exec_ssh_bruteforce()
+    ),
+    '蜜罐诱捕': lambda: (
+        input_node_name("测试"),
+        script_exec_honeypot()
+    ),
+    '武器构建环境部署/删除': lambda: (
+        modify_yaml_files_based_on_user_input(),
+        script_exec_weapon_make_env()
+    ),
+    'Bash反弹交互执行': lambda: (
+        input_node_name("执行"),
+        script_exec_bash_reverse_shell()
+    ),
+    '病毒防护环境部署/删除': lambda: (
+        modify_yaml_files_based_on_user_input(),
+        input_node_name("测试"),
+        script_exec_virus_env()
+    ),
+    '二进制病毒动态监测': script_exec_virus_inspect,
+    'webshell动态监测': script_exec_webshell_inspect,
+    '漏洞利用环境部署/删除': script_exec_exploit_env,
+    'ThinkPHP5远程代码执行': lambda: (
+        input_node_name("测试"),
+        script_exec_thinkphp5_rce()
+    ),
+    '内存webshell检测': script_exec_behinder_memshell,
+    '容器异常命令': lambda: (
+        input_node_name("测试"),
+        script_exec_abnormal_cmd()
+    ),
+    '文件异常操作': script_exec_abnormal_file,
+    '网络模型': script_exec_network_model,
+    '文件模型': script_exec_file_model,
+    '进程模型': script_exec_process_model,
+    '容器逃逸环境部署/删除': lambda: (
+        modify_yaml_files_based_on_user_input(),
+        script_exec_escape_env()
+    ),
+    'CDK黑客工具利用': script_exec_cdk_exploit,
+    '后门检测环境部署/删除': lambda: (
+        modify_yaml_files_based_on_user_input(),
+        script_exec_backdoor_env()
+    ),
+    'Perl反弹Shell': lambda: (
+        input_node_name("执行"),
+        script_exec_perl_reverse_shell()
+    ),
+    'Bash反弹Shell进程参数': lambda: (
+        input_node_name("执行"),
+        script_exec_bash_reverse_shell_process()
+    ),
+    '日志审计一键入侵数据生成': lambda: (
+        modify_yaml_files_based_on_user_input(),
+        script_exec_log_audit()
+    ),
+    '威胁情报': lambda: (
+        input_node_name("执行"),
+        script_exec_ioc_alarm()
+    ),
+}
+
