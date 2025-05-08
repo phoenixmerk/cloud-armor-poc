@@ -185,6 +185,7 @@ def show_banner():
 # 环境一键部署/删除
 def script_exec_0():
     print("\033[91m>>脚本创建命名空间xinfan，并在指定测试节点部署所有所需的pod\033[0m")
+    global node_name
     input_node_name("测试")
     if not node_has_label(node_name, 'nodeSetcontainer=cloudarmortest'):
         label_node(node_name)
