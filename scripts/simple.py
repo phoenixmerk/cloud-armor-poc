@@ -114,6 +114,10 @@ class ScriptMenuManager:
                 else:
                     print(f'{number}: {script}')
 
+# 缓存节点名称
+node_name = ""
+exec_node_name = ""
+
 # 输入节点名称
 def input_node_name(prompt_key: str) -> str:
     global node_name, exec_node_name
