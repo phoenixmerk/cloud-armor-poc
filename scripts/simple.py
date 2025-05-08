@@ -15,8 +15,7 @@ from cdk_tool_exploit import exec_cdk_process
 from file_model import exec_abnormal_touch_process
 from honeypot_inspect import exec_honeypot_process
 from ioc_alarm import exec_ioc_process, run_ioc_nc_command
-from log_audit import manage_static_pod, manage_privilege_yaml, access_secrets_url, \
-    access_pod_url, get_control_plane_internal_ip
+from log_audit import access_secrets_url, access_pod_url, get_control_plane_internal_ip
 from network_model import exec_abnormal_nc_process
 from perl_reverse_shell import exec_perl_process, run_perl_command
 from bash_reverse_shell_process import run_bash_process_command, exec_bash_reverse_process
