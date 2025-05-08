@@ -24,8 +24,144 @@ from thinkphp5_rce import send_request
 from virus_inspect import copy_virus_process
 from webshell_inspect import copy_webshell_process
 
-# 工具标题
-title = """
+# YAML文件修改器
+class YAMLModifier:
+    def __init__(self, directory='../yamls'):
+        self.directory = directory
+    # 修改YAML文件
+    def modify_yaml_file(self, file_path, new_secret_name, image_repository, project_name):
+        with open(file_path, 'r') as file:
+            yaml_contents = list(yaml.safe_load_all(file))
+        for content in yaml_contents:
+            spec = content['spec']
+            if content.get('kind') == 'Pod':
+                container = spec['containers'][0]
+                new_image = f'{image_repository}/{project_name}/{container["image"].split("/")[-1]}'
+                spec['imagePullSecrets'][0]['name'] = new_secret_name
+                container['image'] = new_image
+            elif content.get('kind') == 'Deployment':
+                template_spec = content['spec']['template']['spec']
+                container = template_spec['containers'][0]
+                new_image = f'{image_repository}/{project_name}/{container["image"].split("/")[-1]}'
+                template_spec['imagePullSecrets'][0]['name'] = new_secret_name
+                container['image'] = new_image
+        with open(file_path, 'w') as file:
+            yaml.safe_dump_all(yaml_contents, file)
+
+    # 获取目录下的所有YAML文件
+    def modify_all_yaml_files(self, new_secret_name, image_repository, project_name):
+        all_yaml_files = glob.glob(os.path.join(self.directory, '*.yaml'))
+        for file_path in all_yaml_files:
+            self.modify_yaml_file(file_path, new_secret_name, image_repository, project_name)
+
+    # 用户输入并修改YAML文件
+    def prompt_and_modify(self):
+        while True:
+            print("请选择镜像来源：")
+            print("1. 本地镜像")
+            print("2. 仓库镜像")
+            try:
+                choice = int(input(">>请输入选项数字1或2："))
+                if choice == 1:
+                    self.modify_all_yaml_files(
+                        SECRETS_NAME_DEFAULT,
+                        IMAGE_REPOSITORY_DEFAULT,
+                        PROJECT_NAME_DEFAULT
+                    )
+                    break
+                elif choice == 2:
+                    repo = input(f">>请输入镜像仓库名称(\033[91m例：core.harbor.safedog.site\033[0m)：") or IMAGE_REPOSITORY_DEFAULT
+                    project = input(">>请输入项目名称(\033[91m例：armorpoc20240512\033[0m)：") or PROJECT_NAME_DEFAULT
+                    secret = input(">>请输入secrets名称(\033[91m例：harbor-secret\033[0m)：") or SECRETS_NAME_DEFAULT
+                    self.modify_all_yaml_files(secret, repo, project)
+                    break
+                else:
+                    print(">>输入错误，请输入1或2")
+            except ValueError:
+                print(">>输入错误，请输入数字1或2")
+
+# 脚本菜单管理器
+class ScriptMenuManager:
+    def __init__(self, scripts_menu, highlight_scripts):
+        self.scripts = scripts_menu
+        self.highlight_scripts = highlight_scripts
+        self.script_to_number = {script: number for number, script in self.scripts.items()}
+    # 生成分组脚本
+    def generate_grouped_scripts(self):
+        return {
+            bold_text(title): [self.scripts[i] for i in indices]
+            for title, indices in [
+                ('\n一、一键部署环境', range(1, 3)),
+                ('\n二、七步杀伤链之“侦查跟踪”的检测及防护', range(3, 6)),
+                ('\n三、七步杀伤链之“武器构建”的检测及防护', range(6, 8)),
+                ('\n四、七步杀伤链之“载荷投递”的检测及防护', range(8, 11)),
+                ('\n五、七步杀伤链之“漏洞利用”的检测及防护', range(11, 13)),
+                ('\n六、七步杀伤链之“安装植入”的检测及防护', range(13, 20)),
+                ('\n七、七步杀伤链之”命令与控制“的检测及防护', range(20, 25)),
+                ('\n八、七步杀伤链之“目标达成”的检测及防护', range(25, 27)),
+            ]
+        }
+    
+    # 打印分组脚本
+    def print_grouped_scripts(self):
+        grouped_scripts = self.generate_grouped_scripts()
+        for group, items in grouped_scripts.items():
+            print(group)
+            for script in items:
+                number = self.script_to_number.get(script, '未知编号')
+                if script in self.highlight_scripts:
+                    print(f'\033[92m{number}: {script}\033[0m')
+                else:
+                    print(f'{number}: {script}')
+
+# 输入节点名称
+def input_node_name(prompt_key: str) -> str:
+    global node_name, exec_node_name
+    if prompt_key == "测试" and node_name:
+        print(f">>已缓存测试节点：{node_name}")
+        return node_name
+    elif prompt_key == "执行" and exec_node_name:
+        print(f">>已缓存执行节点：{exec_node_name}")
+        return exec_node_name
+
+    try:
+        node_names = get_all_node_names()
+    except Exception as e:
+        print(e)
+        exit(1)
+
+    print(f"\n请选择{prompt_key}节点：")
+    for idx, name in enumerate(node_names):
+        print(f"{idx + 1}: {name}")
+
+    while True:
+        try:
+            choice = int(input(">>请输入节点编号："))
+            if 1 <= choice <= len(node_names):
+                selected_node = node_names[choice - 1]
+                print(f">>你选择了节点：{selected_node}")
+
+                # 缓存到对应变量
+                if prompt_key == "测试":
+                    node_name = selected_node
+                elif prompt_key == "执行":
+                    exec_node_name = selected_node
+
+                return selected_node
+            else:
+                print(f">>输入错误，请输入1到{len(node_names)}之间的数字")
+        except ValueError:
+            print(">>输入错误，请输入数字编号")        
+
+# 清空缓存
+def clear_node_cache():
+    global node_name, exec_node_name
+    node_name = None
+    exec_node_name = None
+
+# 显示脚本横幅
+def show_banner():
+    banner = """
 \033[91m
 
        _        __                               
@@ -36,19 +172,14 @@ title = """
  /_/\_\_|_| |_|_| \__,_|_| |_| | .__/ \___/ \___|
                                | |               
                                |_|         
-                                     
+
                              云原生安全-信帆POC测试脚本
 \033[0m
 """
-
-copyright = "Copyright © 2025 by Cloud Security Team"
-width = 50
-padding = width - len(copyright) - 1
-
-# 将版权信息放置到标题下方
-title_with_copyright = title + ' ' * padding + copyright
-
-print(title_with_copyright)
+    copyright = "Copyright © 2025 by Cloud Security Team"
+    width = 50
+    padding = width - len(copyright) - 1
+    print(banner + ' ' * padding + copyright)
 
 
 # 环境一键部署/删除
@@ -75,6 +206,7 @@ def script_exec_0():
         manage_dvwa_yaml('../yamls/armor-dvwa.yaml', optype)
         manage_tomcat_yaml('../yamls/armor-tomcat.yaml', optype)
         remove_label(node_name)
+        clear_node_cache()
         pass
 
 
@@ -96,6 +228,7 @@ def script_exec_bruteforce_env():
     elif optype == 'delete':
         manage_ssh_yaml('../yamls/armor-ssh.yaml', optype)
         remove_label(node_name)
+        clear_node_cache()
         pass
 
 
@@ -132,6 +265,7 @@ def script_exec_weapon_make_env():
     elif optype == 'delete':
         manage_ssh_yaml('../yamls/armor-ssh.yaml', optype)
         remove_label(node_name)
+        clear_node_cache()
         pass
 
 
@@ -167,6 +301,7 @@ def script_exec_virus_env():
     elif optype == 'delete':
         manage_dvwa_yaml('../yamls/armor-dvwa.yaml', optype)
         remove_label(node_name)
+        clear_node_cache()
         pass
 
 
@@ -200,6 +335,7 @@ def script_exec_exploit_env():
     elif optype == 'delete':
         manage_thinkphp_yaml('../yamls/armor-thinkphp.yaml', optype)
         remove_label(node_name)
+        clear_node_cache()
 
 
 # thinkphp5远程代码执行
@@ -232,6 +368,7 @@ def script_exec_mem_install_env():
         manage_dvwa_yaml('../yamls/armor-dvwa.yaml', optype)
         manage_tomcat_yaml('../yamls/armor-tomcat.yaml', optype)
         remove_label(node_name)
+        clear_node_cache()
         pass
 
 
@@ -289,6 +426,7 @@ def script_exec_escape_env():
     elif optype == 'delete':
         manage_ssh_yaml('../yamls/armor-ssh.yaml', optype)
         remove_label(node_name)
+        clear_node_cache()
         pass
 
 # 黑客工具逃逸
@@ -314,6 +452,7 @@ def script_exec_backdoor_env():
     elif optype == 'delete':
         manage_ssh_yaml('../yamls/armor-dvwa.yaml', optype)
         remove_label(node_name)
+        clear_node_cache()
         pass
 
 # perl反弹shell
@@ -349,6 +488,7 @@ def script_exec_log_audit():
     access_pod_url(internal_ip)
     access_secrets_url(internal_ip)
     print(f"\033[91m>>一键生成日志审计入侵数据成功\033[0m")
+    clear_node_cache()
 
 # 恶意外联入侵数据生成
 def script_exec_ioc_alarm():
@@ -362,269 +502,162 @@ def script_exec_ioc_alarm():
 
 
 # 获取所有node名称
-def get_all_node_names():
+def get_all_node_names() -> list:
     command = ["kubectl", "get", "nodes", "-o", "jsonpath={.items[*].metadata.name}"]
     process = subprocess.Popen(command, stdout=subprocess.PIPE)
     output, error = process.communicate()
 
     if error:
-        print("Error occurred:", error)
-        return
+        raise RuntimeError(f"获取节点失败：{error.decode()}")
 
-    node_names = output.decode().split()
-    node_names_str = ','.join(node_names)
-    return node_names_str
+    if not output:
+        raise RuntimeError(">>没有可用节点")
 
-# 通用的节点名称输入方法
-def input_node_name(prompt_key: str) -> str:
-    node_names = get_all_node_names()
-    if not node_names:
-        raise RuntimeError(">>无法获取节点列表，请检查Kubernetes集群连接状态")
+    return output.decode().split()
 
-    print(f"\n请选择{prompt_key}节点：")
-    for idx, name in enumerate(node_names):
-        print(f"{idx + 1}: {name}")
-
-    while True:
-        try:
-            choice = int(input(">>请输入节点编号："))
-            if 1 <= choice <= len(node_names):
-                selected_node = node_names[choice - 1]
-                print(f">>你选择了节点：{selected_node}")
-                return selected_node
-            else:
-                print(f">>输入错误，请输入1到{len(node_names)}之间的数字")
-        except ValueError:
-            print(">>输入错误，请输入数字编号")
-
-
-# 定义一个字典，键是数字，值是脚本名
-scripts = {
-    0: '退出脚本',
-    1: '环境一键部署/删除',
-    2: '一键生成入侵数据',
-    3: '暴力破解环境部署/删除',
-    4: 'SSH暴力破解',
-    5: '蜜罐诱捕',
-    6: '武器构建环境部署/删除',
-    7: 'Bash反弹交互执行',
-    8: '病毒防护环境部署/删除',
-    9: '二进制病毒动态监测',
-    10: 'webshell动态监测',
-    11: '漏洞利用环境部署/删除',
-    12: 'ThinkPHP5远程代码执行',
-    13: '安装植入环境部署/删除',
-    14: '内存webshell检测',
-    15: '容器异常命令',
-    16: '文件异常操作',
-    17: '进程模型',
-    18: '文件模型',
-    19: '网络模型',
-    20: '容器逃逸环境部署/删除',
-    21: 'CDK黑客工具利用',
-    22: '后门检测环境部署/删除',
-    23: 'Perl反弹Shell',
-    24: 'Bash反弹Shell进程参数',
-    25: '日志审计一键入侵数据生成',
-    26: '威胁情报'
-
-}
-
-
-# 定义一个新的字典，键是组名，值是一个包含该组中脚本的列表
+# 脚本颜色高亮
 def bold_text(text):
     return f'\033[1m{text}\033[0m'
 
-
-grouped_scripts = {
-    bold_text('\n一、一键部署环境'): [scripts[i] for i in range(1, 3)],
-    bold_text('\n二、七步杀伤链之“侦查跟踪”的检测及防护'): [scripts[i] for i in range(3, 6)],
-    bold_text('\n三、七步杀伤链之“武器构建”的检测及防护'): [scripts[i] for i in range(6, 8)],
-    bold_text('\n四、七步杀伤链之“载荷投递”的检测及防护'): [scripts[i] for i in range(8, 11)],
-    bold_text('\n五、七步杀伤链之“漏洞利用”的检测及防护'): [scripts[i] for i in range(11, 13)],
-    bold_text('\n六、七步杀伤链之“安装植入”的检测及防护'): [scripts[i] for i in range(13, 20)],
-    bold_text('\n七、七步杀伤链之”命令与控制“的检测及防护'): [scripts[i] for i in range(20, 25)],
-    bold_text('\n八、七步杀伤链之“目标达成”的检测及防护'): [scripts[i] for i in range(25, 27)],
-}
-
-# 打印出所有分组的脚本
-highlight_scripts = {'环境一键部署/删除', '一键生成入侵数据', '日志审计一键入侵数据生成'}
-for group, item in grouped_scripts.items():
-    print(f'{group}:')
-    for script in item:
-        number = list(scripts.values()).index(script)
-        if script in highlight_scripts:
-            print(f'\033[92m{number}: {script}\033[0m')
-        else:
-            print(f'{number}: {script}')
-
-
-# 对yaml解析并修改
-def modify_yaml_file(file_path, new_secret_name, image_repository, project_name):
-    with open(file_path, 'r') as file:
-        yaml_contents = list(yaml.safe_load_all(file))
-    for yaml_content in yaml_contents:
-        spec = yaml_content['spec']
-        if yaml_content['kind'] == 'Pod':
-            spec = yaml_content['spec']
-            new_image_name = f'{image_repository}/{project_name}/{spec["containers"][0]["image"].split("/")[-1]}'
-            spec['imagePullSecrets'][0]['name'] = new_secret_name
-            spec['containers'][0]['image'] = new_image_name
-        elif yaml_content['kind'] == 'Deployment':
-            spec = yaml_content['spec']['template']['spec']
-            new_image_name = f'{image_repository}/{project_name}/{spec["containers"][0]["image"].split("/")[-1]}'
-            spec['imagePullSecrets'][0]['name'] = new_secret_name
-            spec['containers'][0]['image'] = new_image_name
-    with open(file_path, 'w') as file:
-        yaml.safe_dump_all(yaml_contents, file)
-
-
-# 获取目录下的所有YAML文件
-def get_all_yaml_files(directory):
-    return glob.glob(os.path.join(directory, '*.yaml'))
-
-
-# 修改所有YAML文件
-def modify_all_yaml_files(directory, new_secret_name, image_repository, project_name):
-    all_yaml_files = get_all_yaml_files(directory)
-    for file_path in all_yaml_files:
-        modify_yaml_file(file_path, new_secret_name, image_repository, project_name)
-
-
-# 修改YAML文件交互
-def modify_yaml_files_based_on_user_input():
+# 获取用户选择的脚本
+def get_user_choice():
     while True:
-        print("请选择镜像来源：")
-        print("1. 本地镜像")
-        print("2. 仓库镜像")
         try:
-            choice = int(input(">>请输入选项数字1或2："))
-            if choice == 1:
-                modify_all_yaml_files('../yamls', SECRETS_NAME_DEFAULT, IMAGE_REPOSITORY_DEFAULT,
-                                      PROJECT_NAME_DEFAULT)
-                break
-            elif choice == 2:
-                image_repository = input(f">>请输入镜像仓库名称(\033[91m例：core.harbor.safedog.site\033[0m)：")
-                if not image_repository:
-                    image_repository = IMAGE_REPOSITORY_DEFAULT
-                project_name = input(">>请输入项目名称(\033[91m例：armorpoc20240512\033[0m)：")
-                if not project_name:
-                    project_name = PROJECT_NAME_DEFAULT
-                secrets_name = input(">>请输入secrets名称(\033[91m例：harbor-secret\033[0m)：")
-                if not secrets_name:
-                    secrets_name = SECRETS_NAME_DEFAULT
-                modify_all_yaml_files('../yamls', secrets_name, image_repository, project_name)
-                break
+            choice = int(input('\n>>请输入一个数字来选择要执行的脚本(\033[91m例：0-26，输入0则退出脚本\033[0m)：'))
+            if 0 <= choice <= 26:
+                return choice
             else:
-                print(">>输入错误，请输入1或2")
+                print(">>输入错误，请输入0-26之间的数字")
         except ValueError:
-            print(">>输入错误，请输入数字1或2")
+            print(">>输入错误，请输入一个数字")
 
+# 显示脚本列表
+def run_script_by_choice(choice, yaml_modifier=None):
+    if yaml_modifier is None:
+        yaml_modifier = YAMLModifier(directory='../yamls')
+    SCRIPT_MAP = {
+        '环境一键部署/删除': lambda: (
+            yaml_modifier.prompt_and_modify(),
+            script_exec_0()
+        ),
+        '一键生成入侵数据': lambda: (
+            input_node_name("测试"),
+            input_node_name("执行"),
+            script_exec_ssh_bruteforce(),
+            script_exec_honeypot(),
+            script_exec_bash_reverse_shell(),
+            script_exec_virus_inspect(),
+            script_exec_webshell_inspect(),
+            script_exec_thinkphp5_rce(),
+            script_exec_behinder_memshell(),
+            script_exec_abnormal_cmd(),
+            script_exec_abnormal_file(),
+            script_exec_network_model(),
+            script_exec_process_model(),
+            script_exec_file_model(),
+            script_exec_cdk_exploit(),
+            script_exec_perl_reverse_shell(),
+            script_exec_bash_reverse_shell_process(),
+            script_exec_ioc_alarm()
+        ),
+        '暴力破解环境部署/删除': lambda: (
+            yaml_modifier.prompt_and_modify(),
+            script_exec_bruteforce_env()
+        ),
+        'SSH暴力破解': lambda: (
+            input_node_name("测试"),
+            script_exec_ssh_bruteforce()
+        ),
+        '蜜罐诱捕': lambda: (
+            input_node_name("测试"),
+            script_exec_honeypot()
+        ),
+        '武器构建环境部署/删除': lambda: (
+            yaml_modifier.prompt_and_modify(),
+            script_exec_weapon_make_env()
+        ),
+        'Bash反弹交互执行': lambda: (
+            input_node_name("执行"),
+            script_exec_bash_reverse_shell()
+        ),
+        '病毒防护环境部署/删除': lambda: (
+            yaml_modifier.prompt_and_modify(),
+            input_node_name("测试"),
+            script_exec_virus_env()
+        ),
+        '二进制病毒动态监测': script_exec_virus_inspect,
+        'webshell动态监测': script_exec_webshell_inspect,
+        '漏洞利用环境部署/删除': script_exec_exploit_env,
+        'ThinkPHP5远程代码执行': lambda: (
+            input_node_name("测试"),
+            script_exec_thinkphp5_rce()
+        ),
+        '内存webshell检测': script_exec_behinder_memshell,
+        '容器异常命令': lambda: (
+            input_node_name("测试"),
+            script_exec_abnormal_cmd()
+        ),
+        '文件异常操作': script_exec_abnormal_file,
+        '网络模型': script_exec_network_model,
+        '文件模型': script_exec_file_model,
+        '进程模型': script_exec_process_model,
+        '容器逃逸环境部署/删除': lambda: (
+            yaml_modifier.prompt_and_modify(),
+            script_exec_escape_env()
+        ),
+        'CDK黑客工具利用': script_exec_cdk_exploit,
+        '后门检测环境部署/删除': lambda: (
+            yaml_modifier.prompt_and_modify(),
+            script_exec_backdoor_env()
+        ),
+        'Perl反弹Shell': lambda: (
+            input_node_name("执行"),
+            script_exec_perl_reverse_shell()
+        ),
+        'Bash反弹Shell进程参数': lambda: (
+            input_node_name("执行"),
+            script_exec_bash_reverse_shell_process()
+        ),
+        '日志审计一键入侵数据生成': lambda: (
+            yaml_modifier.prompt_and_modify(),
+            script_exec_log_audit()
+        ),
+        '威胁情报': lambda: (
+            input_node_name("执行"),
+            script_exec_ioc_alarm()
+        ),
+    }
 
-# 供用户选择脚本
-while True:
+    script_name = SCRIPTS_MENU.get(choice)
+    if script_name is None:
+        print('>>错误: 无效的选择')
+        return
+
     try:
-        choice = int(input('\n>>请输入一个数字来选择要执行的脚本(\033[91m例：0-26，输入0则退出脚本\033[0m)：'))
-        if 0 <= choice <= 26:
-            break
+        handler = SCRIPT_MAP.get(script_name)
+        if handler:
+            handler()
+            print(f'>>\033[92m脚本{script_name}执行成功\033[0m')
         else:
-            print(">>输入错误，请输入0-26之间的数字")
-    except ValueError:
-        print(">>输入错误，请输入一个数字")
+            print(f">>未实现该脚本：{script_name}")
+    except subprocess.CalledProcessError as e:
+        print(f'>>执行脚本{script_name}时发生错误: {str(e)}')
 
-script_name = scripts.get(choice)
-node_name = ''
-exec_node_name = ''
-SCRIPT_MAP = {
-    '环境一键部署/删除': lambda: (
-        modify_yaml_files_based_on_user_input(),
-        script_exec_0()
-    ),
-    '一键生成入侵数据': lambda: (
-        input_node_name("测试"),
-        input_node_name("执行"),
-        script_exec_ssh_bruteforce(),
-        script_exec_honeypot(),
-        script_exec_bash_reverse_shell(),
-        script_exec_virus_inspect(),
-        script_exec_webshell_inspect(),
-        script_exec_thinkphp5_rce(),
-        script_exec_behinder_memshell(),
-        script_exec_abnormal_cmd(),
-        script_exec_abnormal_file(),
-        script_exec_network_model(),
-        script_exec_process_model(),
-        script_exec_file_model(),
-        script_exec_cdk_exploit(),
-        script_exec_perl_reverse_shell(),
-        script_exec_bash_reverse_shell_process(),
-        script_exec_ioc_alarm()
-    ),
-    '暴力破解环境部署/删除': lambda: (
-        modify_yaml_files_based_on_user_input(),
-        script_exec_bruteforce_env()
-    ),
-    'SSH暴力破解': lambda: (
-        input_node_name("测试"),
-        script_exec_ssh_bruteforce()
-    ),
-    '蜜罐诱捕': lambda: (
-        input_node_name("测试"),
-        script_exec_honeypot()
-    ),
-    '武器构建环境部署/删除': lambda: (
-        modify_yaml_files_based_on_user_input(),
-        script_exec_weapon_make_env()
-    ),
-    'Bash反弹交互执行': lambda: (
-        input_node_name("执行"),
-        script_exec_bash_reverse_shell()
-    ),
-    '病毒防护环境部署/删除': lambda: (
-        modify_yaml_files_based_on_user_input(),
-        input_node_name("测试"),
-        script_exec_virus_env()
-    ),
-    '二进制病毒动态监测': script_exec_virus_inspect,
-    'webshell动态监测': script_exec_webshell_inspect,
-    '漏洞利用环境部署/删除': script_exec_exploit_env,
-    'ThinkPHP5远程代码执行': lambda: (
-        input_node_name("测试"),
-        script_exec_thinkphp5_rce()
-    ),
-    '内存webshell检测': script_exec_behinder_memshell,
-    '容器异常命令': lambda: (
-        input_node_name("测试"),
-        script_exec_abnormal_cmd()
-    ),
-    '文件异常操作': script_exec_abnormal_file,
-    '网络模型': script_exec_network_model,
-    '文件模型': script_exec_file_model,
-    '进程模型': script_exec_process_model,
-    '容器逃逸环境部署/删除': lambda: (
-        modify_yaml_files_based_on_user_input(),
-        script_exec_escape_env()
-    ),
-    'CDK黑客工具利用': script_exec_cdk_exploit,
-    '后门检测环境部署/删除': lambda: (
-        modify_yaml_files_based_on_user_input(),
-        script_exec_backdoor_env()
-    ),
-    'Perl反弹Shell': lambda: (
-        input_node_name("执行"),
-        script_exec_perl_reverse_shell()
-    ),
-    'Bash反弹Shell进程参数': lambda: (
-        input_node_name("执行"),
-        script_exec_bash_reverse_shell_process()
-    ),
-    '日志审计一键入侵数据生成': lambda: (
-        modify_yaml_files_based_on_user_input(),
-        script_exec_log_audit()
-    ),
-    '威胁情报': lambda: (
-        input_node_name("执行"),
-        script_exec_ioc_alarm()
-    ),
-}
+# 主流程函数，依次调用获取用户输入和执行对应脚本
+def main():
+    show_banner()  
+    menu_manager = ScriptMenuManager(SCRIPTS_MENU, HIGHLIGHT_SCRIPTS)
+    menu_manager.print_grouped_scripts()
+    while True:
+        choice = get_user_choice()
+        if choice == 0:
+            print(">>感谢使用信帆POC测试脚本，再见！")
+            break
+        run_script_by_choice(choice)
+
+
+if __name__ == "__main__":
+    main()
+
+
 

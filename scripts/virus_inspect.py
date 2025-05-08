@@ -30,7 +30,7 @@ def copy_virus_process():
     # 在交互式shell中执行命令
     command_to_copy_virus = "cp /opt/trojan/* /usr/bin/"
     child.sendline(command_to_copy_virus)
-    print("\033[92m>>复制二进制病毒到/opt路径成功，10s后自动清除\033[0m")
+    print("\033[92m>>复制二进制病毒到/usr/bin路径成功，10s后自动清除\033[0m")
     time.sleep(10)
     command_to_delete_virus = "rm -rf /usr/bin/CoinMiner /usr/bin/mssecsvc.exe"
     child.sendline(command_to_delete_virus)
