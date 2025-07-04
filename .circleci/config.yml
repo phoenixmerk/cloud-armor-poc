@@ -2,7 +2,7 @@ version: 2.1
 executors:
   docker-executor:
     docker:
-      - image: cimg/base:2022.11
+      - image: cimg/base:2023.06
     working_directory: /home/circleci/project
 
 jobs:
