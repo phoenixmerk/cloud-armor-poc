@@ -30,6 +30,8 @@ jobs:
           name: Build Docker image
           command: |
             docker login -u cn-north-1@WS69AVPZCUMA3YMNFWHD -p 0c05b6ee08f62336ccaff8c335ac6987136f970a3da2e248aa7ff2d3d1e8401e swr.cn-north-1.myhuaweicloud.com
+            docker buildx create --use --name mybuilder
+            docker buildx inspect --bootstrap
             docker buildx build --platform linux/amd64,linux/arm64 -t swr.cn-north-1.myhuaweicloud.com/armor-poc-test/armor_poc_worker:latest --push .
       - run:
           name: Package image
