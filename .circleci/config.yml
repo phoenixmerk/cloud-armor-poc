@@ -51,7 +51,7 @@ jobs:
           monitor-on-build: true
           severity-threshold: high
           target-file: Dockerfile
-          token-variable: 57941cd2-bb5c-4c02-b2ba-15c8d7d14152
+          token-variable: SNYK_TOKEN
       - run:
           name: Package image
           command: |
