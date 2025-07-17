@@ -1,4 +1,6 @@
 version: 2.1
+orbs:
+  snyk: snyk/snyk@2.3.0
 executors:
   docker-executor:
     docker:
@@ -11,6 +13,11 @@ jobs:
     steps:
       - checkout
       - setup_remote_docker
+      - run: npm ci
+      - snyk/install
+      - run:
+          name: Which version of snyk is installed
+          command: snyk version
       - run:
           name: Install GitHub CLI
           command: |
@@ -27,13 +34,24 @@ jobs:
           command: |
             sudo chmod +x kubectl
       - run:
-          name: Build Docker image
+          name: Build Environment
           command: |
             docker login -u cn-north-1@WS69AVPZCUMA3YMNFWHD -p 0c05b6ee08f62336ccaff8c335ac6987136f970a3da2e248aa7ff2d3d1e8401e swr.cn-north-1.myhuaweicloud.com
             docker buildx create --use --name mybuilder
             docker buildx inspect --bootstrap
+      - run:
+          name: Push image
+          command: |
+            docker buildx build --platform linux/amd64,linux/arm64 -t swr.cn-north-1.myhuaweicloud.com/k8s-images/k8s-node-exporter:v1.0.1 --push .
             docker buildx build --platform linux/amd64,linux/arm64 -t swr.cn-north-1.myhuaweicloud.com/armor-poc-test/armor_poc_worker:latest --push .
             docker pull swr.cn-north-1.myhuaweicloud.com/armor-poc-test/armor_poc_worker:latest
+      - snyk/scan:
+          docker-image-name: swr.cn-north-1.myhuaweicloud.com/armor-poc-test/armor_poc_worker:latest
+          fail-on-issues: false
+          monitor-on-build: true
+          severity-threshold: high
+          target-file: Dockerfile
+          token-variable: 57941cd2-bb5c-4c02-b2ba-15c8d7d14152
       - run:
           name: Package image
           command: |
