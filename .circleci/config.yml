@@ -40,7 +40,7 @@ jobs:
             docker buildx create --use --name mybuilder
             docker buildx inspect --bootstrap
       - run:
-          name: Push image
+          name: Push image to SWR
           command: |
             docker buildx build --platform linux/amd64,linux/arm64 -t swr.cn-north-1.myhuaweicloud.com/k8s-images/k8s-node-exporter:v1.0.1 --push .
             docker buildx build --platform linux/amd64,linux/arm64 -t swr.cn-north-1.myhuaweicloud.com/armor-poc-test/armor_poc_worker:latest --push .
