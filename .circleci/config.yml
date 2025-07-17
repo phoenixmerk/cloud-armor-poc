@@ -13,11 +13,6 @@ jobs:
     steps:
       - checkout
       - setup_remote_docker
-      - run: npm ci
-      - snyk/install
-      - run:
-          name: Which version of snyk is installed
-          command: snyk version
       - run:
           name: Install GitHub CLI
           command: |
